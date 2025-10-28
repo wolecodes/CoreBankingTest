@@ -1,11 +1,13 @@
-using CoreBanking.Test.Core.Models;
-
+using CoreBanking.Test.Core.ValueObjects;
 namespace CoreBanking.Test.Core.Interfaces
 {
     public interface IAccountRepository
     {
-    AccountModel? GetAccountById(int id);
-    IEnumerable<AccountModel> GetAllAccounts();
-    void Add(AccountModel account);
+        // Task<Account> GetByIdAsync(Guid accountId);
+        // Task<Account> GetByAccountNumberAsync(AccountNumber accountNumber);
+        // Task<IEnumerable<Account>> GetByCustomerIdAsync(Guid customerId);
+        // Task AddAsync(Account account);
+        // Task UpdateAsync(Account account);
+        // Task<bool> AccountNumberExistsAsync(AccountNumber accountNumber);
     }
 }
