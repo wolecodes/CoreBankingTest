@@ -24,7 +24,7 @@ namespace CoreBankingTest.Infra.Repositories
     {
       return await _context.Transactions
         .Where(t => t.AccountId == accountId)
-        .OrderByDescending(t => t.TimeStamp)
+        .OrderByDescending(t => t.Timestamp)
         .ToListAsync(cancellationToken);
     }
 
@@ -32,9 +32,9 @@ namespace CoreBankingTest.Infra.Repositories
     {
       return await _context.Transactions
         .Where(t => t.AccountId == accountId &&
-              t.TimeStamp >= startDate &&
-              t.TimeStamp <= endDate)
-        .OrderBy(t => t.TimeStamp)
+              t.Timestamp >= startDate &&
+              t.Timestamp <= endDate)
+        .OrderBy(t => t.Timestamp)
         .ToListAsync(cancellationToken);
     }
 

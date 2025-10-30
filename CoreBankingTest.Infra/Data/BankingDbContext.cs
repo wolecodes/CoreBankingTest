@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using CoreBanking.Test.Core.Entities;
 using CoreBanking.Test.Core.ValueObjects;
+using CoreBanking.Test.Core.Enums;
 namespace CoreBankingTest.Infra.Data
 {
   public class BankingDbContext : DbContext
@@ -78,7 +79,7 @@ namespace CoreBankingTest.Infra.Data
 
         entity.Property(t => t.Description).HasMaxLength(500);
         entity.Property(t => t.Reference).HasMaxLength(50);
-        entity.Property(t => t.TimeStamp).IsRequired();
+        entity.Property(t => t.Timestamp).IsRequired();
 
       });
       // modelBuilder.Entity<Customer>().HasData(
@@ -102,6 +103,49 @@ namespace CoreBankingTest.Infra.Data
       //         AccountId = Guid.Parse("c3d4e5f6-3456-7890-cde1-345678901cde"),
       //         Balance = new Money(1500.00m)
       //     }
+
+
+      modelBuilder.Entity<Customer>().HasData(new {
+                    CustomerId = CustomerId.Create(Guid.Parse("a1b2c3d4-1234-5678-9abc-123456789abc")),
+                    FirstName = "Alice",
+                    LastName = "Johnson",
+                    Email = "alice.johnson@email.com",
+                    PhoneNumber = "555-0101",
+                    DateCreated = DateTime.UtcNow.AddDays(-30),
+                    IsActive = true,
+                    IsDeleted = false
+                }
+            );
+
+            modelBuilder.Entity<Account>().HasData(new {
+                    AccountId = AccountId.Create(Guid.Parse("c3d4e5f6-3456-7890-cde1-345678901cde")),
+                    AccountType = AccountType.Checking, // EF handles enum conversion
+                    CustomerId = CustomerId.Create(Guid.Parse("a1b2c3d4-1234-5678-9abc-123456789abc")),
+                    Currency = "NGN",
+                    DateOpened = DateTime.UtcNow.AddDays(-20),
+                    IsActive = true,
+                    IsDeleted = false            
+                }
+            );
+
+            // Then configure the owned types separately
+            modelBuilder.Entity<Account>().OwnsOne(a => a.AccountNumber).HasData(
+                new
+                {
+                    AccountId = AccountId.Create(Guid.Parse("c3d4e5f6-3456-7890-cde1-345678901cde")),
+                    Value = "1000000001"
+                }
+            );
+
+            modelBuilder.Entity<Account>().OwnsOne(a => a.Balance).HasData(
+                new
+                {
+                    AccountId = AccountId.Create(Guid.Parse("c3d4e5f6-3456-7890-cde1-345678901cde")),
+                    Amount = 1500.00m,
+                    Currency = "NGN"
+                }
+            );
+
     }
   }
 

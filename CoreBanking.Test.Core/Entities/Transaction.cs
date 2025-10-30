@@ -3,38 +3,38 @@ using CoreBanking.Test.Core.ValueObjects;
 
 namespace CoreBanking.Test.Core.Entities
 {
-  public class Transaction
-  {
-    public TransactionId TransactionId { get; private set; }
-    public AccountId AccountId { get; private set; }
-    public Account Account { get; private set; }
-    public TransactionType Type { get; private set; }
-    public Money Amount { get; private set; }
-    public string Description { get; private set; }
-    public DateTime TimeStamp { get; private set; }
-  
-    public string Reference { get; private set; }
-
-
-    // Required For EF Core
-    private Transaction() { }
-
-
-    public Transaction(AccountId accountId, Money amount, TransactionType type, string description = "")
+    public class Transaction : ISoftDelete
     {
-      TransactionId = TransactionId.Create();
-      AccountId = accountId;
-      Type = type;
-      Amount = amount;
-      Description = description ?? throw new ArgumentNullException(nameof(description));
-      TimeStamp = DateTime.UtcNow;
-      Reference = GenerateReference();
-    } 
+        public TransactionId TransactionId { get; private set; }
+        public AccountId AccountId { get; private set; }
+        public Account Account { get; private set; }
+        public TransactionType Type { get; private set; }
+        public Money Amount { get; private set; }
+        public string Description { get; private set; }
+        public DateTime Timestamp { get; private set; }
+        public string Reference { get; private set; }
+        public bool IsDeleted { get; private set; }
+        public DateTime? DeletedAt { get; private set; }
+        public string? DeletedBy { get; private set; }
 
-    private string GenerateReference()
-    {
-      return $"{TimeStamp:yyyyMMddHHmmss}-{TransactionId.ToString().Substring(0, 8)}";
+
+        private Transaction() { } // for materializing EF Core
+
+        public Transaction(AccountId accountId, TransactionType type, Money amount, string description, Account account)
+        {
+            TransactionId = TransactionId.Create();
+            AccountId = accountId;
+            Account = account;
+            Type = type;
+            Amount = amount;
+            Description = description ?? throw new ArgumentNullException(nameof(description));
+            Timestamp = DateTime.UtcNow;
+            Reference = GenerateReference();
+        }
+
+        private string GenerateReference()
+        {
+            return $"{Timestamp:yyyyMMddHHmmss}-{TransactionId.ToString().Substring(0, 8)}";
+        }
     }
-  
-  }
 }

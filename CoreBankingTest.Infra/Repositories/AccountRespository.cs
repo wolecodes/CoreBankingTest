@@ -1,12 +1,12 @@
-using CoreBanking.Test.Core.Interfaces;
-using CoreBankingTest.Infra.Data;
 using CoreBanking.Test.Core.Entities;
+using CoreBanking.Test.Core.Interfaces;
+using CoreBanking.Test.Core.Exceptions;
 using CoreBanking.Test.Core.ValueObjects;
+using CoreBankingTest.Infra.Data;
 using Microsoft.EntityFrameworkCore;
-namespace CoreBanking.Infra.Repositories
+
+namespace CoreBankingTest.Infra.Repositories
 {
-  
-}
     public class AccountRepository : IAccountRepository
     {
         private readonly BankingDbContext _context;
@@ -16,33 +16,32 @@ namespace CoreBanking.Infra.Repositories
             _context = context;
         }
 
+        public async Task<Account?> GetByIdAsync(AccountId accountId)
+        {
+            return await _context.Accounts
+                .Include(a => a.Transactions)
+                .FirstOrDefaultAsync(a => a.AccountId == accountId);
+        }
 
+        public async Task<List<Account>> GetAllAsync()
+        {
+            return await _context.Accounts
+                .Include(a => a.Transactions)
+                .ToListAsync();
+        }
 
-  public async Task<List<Account>> GetAllAsync()
-  {
-    return await _context.Accounts
-        .Include(a => a.Transactions)
-        .ToListAsync();
-  }
-  public async Task<Account> GetByIdAsync(AccountId accountId)
-  {
-    return await _context.Accounts
-        .Include(a => a.Transactions)
-        .FirstOrDefaultAsync(a => a.AccountId == accountId);
-  }
+        public async Task<Account?> GetByAccountNumberAsync(AccountNumber accountNumber)
+        {
+            return await _context.Accounts
+                .Include(a => a.Transactions)
+                .FirstOrDefaultAsync(a => a.AccountNumber == accountNumber);
+        }
 
-  public async Task<Account> GetByAccountNumberAsync(AccountNumber accountNumber)
-  {
-    return await _context.Accounts
-        .Include(a => a.Transactions)
-        .FirstOrDefaultAsync(a => a.AccountNumber == accountNumber);
-  }
-
-  public async Task<IEnumerable<Account>> GetByCustomerIdAsync(CustomerId customerId)
-  {
-      return await _context.Accounts
-          .Where(a => a.CustomerId == customerId)
-          .Include(a => a.Transactions)
+        public async Task<IEnumerable<Account>> GetByCustomerIdAsync(CustomerId customerId)
+        {
+            return await _context.Accounts
+                .Where(a => a.CustomerId == customerId)
+                .Include(a => a.Transactions)
                 .ToListAsync();
         }
 
@@ -57,6 +56,27 @@ namespace CoreBanking.Infra.Repositories
             await Task.CompletedTask;
         }
 
+        public async Task UpdateAccountBalanceAsync(AccountId accountId, Money newBalance)
+        {
+            var account = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.AccountId == accountId);
+
+            if (account == null)
+                throw new InvalidOperationException("Account not found.");
+
+            // Replace the value object
+            account.UpdateBalance(newBalance);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ConcurrencyException("Account was modified by another user. Please refresh and try again.");
+            }
+        }
+
         public async Task<bool> AccountNumberExistsAsync(AccountNumber accountNumber)
         {
             return await _context.Accounts
@@ -67,4 +87,5 @@ namespace CoreBanking.Infra.Repositories
         {
             await _context.SaveChangesAsync();
         }
+    }
 }
