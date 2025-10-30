@@ -5,12 +5,14 @@ namespace CoreBanking.Test.Core.Entities
 {
   public class Transaction
   {
-    public Guid TransactionId { get; private set; }
-    public Guid AccountId { get; private set; }
+    public TransactionId TransactionId { get; private set; }
+    public AccountId AccountId { get; private set; }
+    public Account Account { get; private set; }
     public TransactionType Type { get; private set; }
     public Money Amount { get; private set; }
     public string Description { get; private set; }
     public DateTime TimeStamp { get; private set; }
+  
     public string Reference { get; private set; }
 
 
@@ -18,9 +20,9 @@ namespace CoreBanking.Test.Core.Entities
     private Transaction() { }
 
 
-    public Transaction(Guid accountId, Money amount, TransactionType type, string description = "")
+    public Transaction(AccountId accountId, Money amount, TransactionType type, string description = "")
     {
-      TransactionId = Guid.NewGuid();
+      TransactionId = TransactionId.Create();
       AccountId = accountId;
       Type = type;
       Amount = amount;
