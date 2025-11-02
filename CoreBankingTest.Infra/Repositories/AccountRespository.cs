@@ -1,6 +1,6 @@
 using CoreBanking.Test.Core.Entities;
-using CoreBanking.Test.Core.Interfaces;
 using CoreBanking.Test.Core.Exceptions;
+using CoreBanking.Test.Core.Interfaces;
 using CoreBanking.Test.Core.ValueObjects;
 using CoreBankingTest.Infra.Data;
 using Microsoft.EntityFrameworkCore;

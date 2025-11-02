@@ -3,11 +3,10 @@ using CoreBanking.Test.Core.Entities;
 namespace CoreBanking.Test.Core.Interfaces
 {
     public interface IAccountRepository
-    {
-
+    { 
+        Task<Account?> GetByIdAsync(AccountId accountId);
         Task<List<Account>> GetAllAsync();
-        Task<Account> GetByIdAsync(AccountId accountId);
-        Task<Account> GetByAccountNumberAsync(AccountNumber accountNumber);
+        Task<Account?> GetByAccountNumberAsync(AccountNumber accountNumber);
         Task<IEnumerable<Account>> GetByCustomerIdAsync(CustomerId customerId);
         Task AddAsync(Account account);
         Task UpdateAsync(Account account);

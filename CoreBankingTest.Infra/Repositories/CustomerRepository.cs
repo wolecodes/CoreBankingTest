@@ -14,12 +14,12 @@ namespace CoreBankingTest.Infra.Repositories
       _context = context;
     }
 
-    public async Task<Customer> GetByIdAsync(CustomerId customerId)
-    {
-      return await _context.Customers
-          .Include(c => c.Accounts)
-          .FirstOrDefaultAsync(c => c.CustomerId == customerId);
-    }
+     public async Task<Customer?> GetByIdAsync(CustomerId customerId)
+        {
+            return await _context.Customers
+                .Include(c => c.Accounts)
+                .FirstOrDefaultAsync(c => c.CustomerId == customerId);
+        }
 
     public async Task<IEnumerable<Customer>> GetAllAsync()
     {

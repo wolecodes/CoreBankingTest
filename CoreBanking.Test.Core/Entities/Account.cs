@@ -1,9 +1,12 @@
 using CoreBanking.Test.Core.Enums;
+using CoreBanking.Test.Core.Interfaces;
 using CoreBanking.Test.Core.ValueObjects;
+using CoreBanking.Test.Core.Events;
+
+
 
 namespace CoreBanking.Test.Core.Entities
 {
-
     public class Account : ISoftDelete
     {
         public AccountId AccountId { get; private set; }
@@ -19,6 +22,9 @@ namespace CoreBanking.Test.Core.Entities
         public DateTime? DeletedAt { get; private set; }
         public string? DeletedBy { get; private set; }
 
+        // Domain events collection
+        private readonly List<IDomainEvent> _domainEvents = new();
+        public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
         // Navigation properties - private to enforce aggregate boundary
         private readonly List<Transaction> _transactions = new();
@@ -26,13 +32,13 @@ namespace CoreBanking.Test.Core.Entities
 
         private Account() { } // EF Core needs this
 
-        public Account(AccountNumber accountNumber, AccountType accountType, CustomerId customerId, Customer customer)
+        // Option 1: Keep existing constructor for internal use
+        private Account(AccountNumber accountNumber, AccountType accountType, CustomerId customerId)
         {
             AccountId = AccountId.Create();
             AccountNumber = accountNumber;
             AccountType = accountType;
             CustomerId = customerId;
-            Customer = customer;
             Balance = new Money(0);
             DateOpened = DateTime.UtcNow;
             IsActive = true;
@@ -90,6 +96,102 @@ namespace CoreBanking.Test.Core.Entities
             return transaction;
         }
 
+    public static Account Create(
+        CustomerId customerId,
+        AccountNumber accountNumber,
+        AccountType accountType,
+        Money initialBalance)
+    {
+      // Domain validation
+      if (initialBalance.Amount < 0)
+        throw new InvalidOperationException("Initial balance cannot be negative");
+
+      if (initialBalance.Amount > 1000000)
+        throw new InvalidOperationException("Initial deposit too large");
+
+      // Create account using private constructor
+      var account = new Account(
+          accountNumber: accountNumber,
+          accountType: accountType,
+          customerId: customerId
+      )
+      {
+        Balance = initialBalance // Set initial balance after construction
+      };
+
+      // Raise domain event if needed
+      account.AddDomainEvent(new AccountCreatedEvent(account));
+
+      return account;
+    }
+        
+        public void Transfer(Money amount, Account destination, string reference, string description)
+        {
+            // Validate inputs
+            if (destination == null)
+                throw new ArgumentNullException(nameof(destination), "Destination account cannot be null");
+
+            if (amount.Amount <= 0)
+                throw new InvalidOperationException("Transfer amount must be positive");
+
+            if (this == destination)
+                throw new InvalidOperationException("Cannot transfer to the same account");
+
+            // Check source account conditions
+            if (!IsActive)
+                throw new InvalidOperationException("Source account is not active");
+
+            if (!destination.IsActive)
+                throw new InvalidOperationException("Destination account is not active");
+
+            // Check sufficient funds
+            if (Balance.Amount < amount.Amount)
+                throw new InvalidOperationException("Insufficient funds for transfer");
+
+            // Special business rules for Savings accounts
+            if (AccountType == AccountType.Savings && _transactions.Count(t => t.Type == TransactionType.Withdrawal) >= 6)
+                throw new InvalidOperationException("Savings account withdrawal limit reached");
+
+            // Execute the transfer as an atomic operation
+            // Withdraw from source
+            Balance -= amount;
+            var withdrawalTransaction = new Transaction(
+                accountId: AccountId,
+                account: this,
+                type: TransactionType.TransferOut,
+                amount: amount,
+                description: $"Transfer to {destination.AccountNumber.Value}: {description}",
+                reference: reference
+            );
+            _transactions.Add(withdrawalTransaction);
+
+            // Deposit to destination
+            destination.Balance += amount;
+            var depositTransaction = new Transaction(
+                accountId: destination.AccountId,
+                account: destination,
+                type: TransactionType.TransferIn,
+                amount: amount,
+                description: $"Transfer from {AccountNumber.Value}: {description}",
+                reference: reference
+            );
+            destination._transactions.Add(depositTransaction);
+
+            // Raise domain events for the transfer
+            AddDomainEvent(new MoneyTransferredEvent(this, destination, amount, reference));
+        }
+
+        // Domain event methods
+        public void AddDomainEvent(IDomainEvent domainEvent)
+        {
+            _domainEvents.Add(domainEvent);
+        }
+
+        public void ClearDomainEvents()
+        {
+            _domainEvents.Clear();
+        }
+
         public void CloseAccount()
         {
             if (Balance.Amount != 0)
@@ -98,12 +200,13 @@ namespace CoreBanking.Test.Core.Entities
             IsActive = false;
         }
 
-        public void UpdateBalance(Money newBalance)
-        {
-            if (!IsActive)
-                throw new InvalidOperationException("Cannot update balance for inactive account.");
+    public void UpdateBalance(Money newBalance)
+    {
+      if (!IsActive)
+        throw new InvalidOperationException("Cannot update balance for inactive account.");
 
-            Balance = newBalance;
-        }
+      Balance = newBalance;
     }
+
+}
 }

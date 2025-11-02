@@ -3,7 +3,7 @@ using CoreBankingTest.Infra.Data;
 using CoreBankingTest.Infra.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace CoreBanking.API
+namespace CoreBankingTest.API
 {
     public class Program
     {

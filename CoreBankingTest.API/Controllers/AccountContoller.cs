@@ -3,34 +3,35 @@ using CoreBanking.Test.Core.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 
 
-namespace CoreBankingTest.API.Controller
-{ }
-[ApiController]
-[Route("api/[controller]")]
-public class AccountController : ControllerBase
+namespace CoreBankingTest.API.Controllers
 {
-    private readonly IAccountRepository _accountRepository;
-
-    public AccountController(IAccountRepository accountRepository)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AccountController : ControllerBase
     {
-        _accountRepository = accountRepository;
-    }
+        private readonly IAccountRepository _accountRepository;
 
-    [HttpGet]
-    public IActionResult GetAllAccounts()
-    {
-        var accounts = _accountRepository.GetAllAsync();
-        return Ok(accounts);
-    }
-
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetByIdAsync(Guid id)
-    {
-        var account = await _accountRepository.GetByIdAsync(new AccountId(id));
-        if (account == null)
+        public AccountController(IAccountRepository accountRepository)
         {
-            return NotFound();
+            _accountRepository = accountRepository;
         }
-        return Ok(account);
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllAccounts()
+        {
+            var accounts = await _accountRepository.GetAllAsync();
+            return Ok(accounts);
+        }
+
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetByIdAsync(Guid id)
+        {
+            var account = await _accountRepository.GetByIdAsync(new AccountId(id));
+            if (account == null)
+            {
+                return NotFound();
+            }
+            return Ok(account);
+        }
     }
 }

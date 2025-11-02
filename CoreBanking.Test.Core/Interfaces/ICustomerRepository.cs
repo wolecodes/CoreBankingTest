@@ -6,7 +6,7 @@ namespace CoreBanking.Test.Core.Interfaces
   {
     // Define methods for customer repository
 
-    Task<Customer> GetByIdAsync(CustomerId customerId);
+    Task<Customer?> GetByIdAsync(CustomerId customerId);
     Task<IEnumerable<Customer>> GetAllAsync();
     Task AddAsync(Customer customer);
     Task UpdateAsync(Customer customer);
